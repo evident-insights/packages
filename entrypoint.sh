@@ -41,16 +41,16 @@ if [ ! -f "$DEVPI_SERVER_ROOT/.serverversion" ]; then
 fi
 
 echo "ENTRYPOINT: Starting devpi-server"
-devpi-server --host 0.0.0.0 --port 3141 --serverdir "$DEVPI_SERVER_ROOT" "$@" &
+devpi-server --host 0.0.0.0 --port $PORT --serverdir "$DEVPI_SERVER_ROOT" "$@" &
 
-timeout 10 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 1; done' localhost 3141
+timeout 10 bash -c 'until printf "" 2>>/dev/null >>/dev/tcp/$0/$1; do sleep 1; done' localhost $PORT
 
 echo "ENTRYPOINT: Installing signal traps"
 trap kill_devpi SIGINT SIGTERM
 
 if [ "$initialize" == "yes" ]; then
     echo "ENTRYPOINT: Initializing devpi-server"
-    devpi use http://localhost:3141
+    devpi use http://localhost:$PORT
     devpi login root --password=''
     echo "ENTRYPOINT: Setting root password to $DEVPI_ROOT_PASSWORD"
     devpi user -m root "password=$DEVPI_ROOT_PASSWORD"
