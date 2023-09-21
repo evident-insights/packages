@@ -1,5 +1,13 @@
 #!/bin/bash
 set -euo pipefail
+
+# Set up FUSE with google cloud storage
+mkdir -p $MNT_DIR
+echo "Mounting GCS Fuse."
+gcsfuse --debug_gcs --debug_fuse $BUCKET $MNT_DIR 
+echo "Mounting completed."
+
+
 IFS=$'\n\t'
 
 function generate_password() {
