@@ -11,4 +11,3 @@ ENV DEVPI_SERVER_ROOT=/devpi
 COPY devpi-client /usr/local/bin/
 COPY entrypoint.sh /
 ENTRYPOINT [ "/bin/bash", "/entrypoint.sh" ]
-EXPOSE 3141
