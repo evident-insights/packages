@@ -40,5 +40,10 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@v1'
 
-      - name: 'Update production service'
-        run: gcloud compute instances update-container packages --zone=europe-west2-c
+      - name: Deploy to Cloud Run
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v0
+        with:
+          service: packages
+          region: europe-west1
+          image: europe-west2-docker.pkg.dev/evident-insights/packages/production:latest
