@@ -1,0 +1,44 @@
+name: Deploy the package server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-production-container:
+    if: ${{ vars.GITHUB_BASE_REF }} == 'main'
+
+    name: "Build and deploy the container"
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: 'actions/checkout@v3'
+        name: 'Checkout project'
+
+      - id: 'auth'
+        name: 'Authenticate to Google Cloud'
+        uses: 'google-github-actions/auth@v1'
+        with:
+          token_format: 'access_token'
+          service_account: 'github-actions@evident-insights.iam.gserviceaccount.com'
+          credentials_json: '${{ secrets.RUNNER_SERVICE_CREDENTIALS }}'
+
+      - uses: 'docker/login-action@v1'
+        with:
+          registry: 'europe-west2-docker.pkg.dev'
+          username: 'oauth2accesstoken'
+          password: '${{ steps.auth.outputs.access_token }}'
+
+      - name: 'Build production container'
+        run: docker build -t europe-west2-docker.pkg.dev/evident-insights/packages/production:latest .
+
+      - name: 'Publish production container'
+        run: docker push europe-west2-docker.pkg.dev/evident-insights/packages/production:latest
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v1'
+
+      - name: 'Update production service'
+        run: gcloud compute instances update-container packages --zone=europe-west2-c

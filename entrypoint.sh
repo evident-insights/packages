@@ -1,12 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
+echo $CLOUD_STORAGE_CREDENTIALS > /service-account-key.json
+
 # Set up FUSE with google cloud storage
 mkdir -p $MNT_DIR
 echo "Mounting GCS Fuse."
 gcsfuse --debug_gcs --debug_fuse $BUCKET $MNT_DIR 
 echo "Mounting completed."
-
 
 IFS=$'\n\t'
 
@@ -45,7 +46,7 @@ initialize=no
 if [ ! -f "$DEVPI_SERVER_ROOT/.serverversion" ]; then
     initialize=yes
     echo "ENTRYPOINT: Initializing server root $DEVPI_SERVER_ROOT"
-    devpi-init --serverdir "$DEVPI_SERVER_ROOT"
+    devpi-init --no-root-pypi --serverdir "$DEVPI_SERVER_ROOT"
 fi
 
 echo "ENTRYPOINT: Starting devpi-server"
@@ -59,10 +60,13 @@ trap kill_devpi SIGINT SIGTERM
 if [ "$initialize" == "yes" ]; then
     echo "ENTRYPOINT: Initializing devpi-server"
     devpi use http://localhost:$PORT
-    devpi login root --password=''
-    echo "ENTRYPOINT: Setting root password to $DEVPI_ROOT_PASSWORD"
-    devpi user -m root "password=$DEVPI_ROOT_PASSWORD"
+    devpi user -c evident email=data@evidentinsights.com password=''
+    devpi login evident --password=''
+    echo "ENTRYPOINT: Setting evident password to $DEVPI_ROOT_PASSWORD"
+    devpi user -m evident "password=$DEVPI_ROOT_PASSWORD"
     echo -n "$DEVPI_ROOT_PASSWORD" > "$DEVPI_SERVER_ROOT/.root_password"
+
+    devpi index -c packages
     devpi logoff
 fi
 
